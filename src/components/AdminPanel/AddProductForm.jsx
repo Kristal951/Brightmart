@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from "react";
+import React, { useCallback, useState, useRef } from "react";
 import {
   Button,
   Drawer,
@@ -18,10 +18,12 @@ import {
 } from "@chakra-ui/react";
 import { MdImage } from "react-icons/md";
 import { useDropzone } from "react-dropzone";
-import axios from "axios";
 import { uploadImage } from "../../lib/appwrite"; // Ensure this function is correctly implemented
-import { useDispatch } from "react-redux";
-import {addNewProduct} from '../../store/Admin/Products/index'
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addNewProduct,
+  fetchAllProducts,
+} from "../../store/Admin/Products/index";
 
 const AddProductForm = ({ isOpen, onClose, btnRef }) => {
   const [imagePreview, setImagePreview] = useState(null);
@@ -35,10 +37,12 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
   const inputRef = useRef(null);
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
+  const {isLoading, error } = useSelector(
+    (state) => state.adminProducts
+  );
 
-
-  const handleClose = () => {
+  const handleClose = async () => {
     onClose();
     setImagePreview(null);
     setImageFile(null);
@@ -47,6 +51,10 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
     setProductDesc("");
     setProductCateg("");
     setCurrentStock("");
+    dispatch(fetchAllProducts())
+      .unwrap()
+      .then((result) => console.log("Fetched products:", result))
+      .catch((err) => console.error("Error fetching products:", err));
   };
 
   const onDrop = useCallback(
@@ -84,7 +92,13 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
   };
 
   const handleSubmit = async () => {
-    if (!productName || !productPrice || !productDesc || !productCateg || !currentStock) {
+    if (
+      !productName ||
+      !productPrice ||
+      !productDesc ||
+      !productCateg ||
+      !currentStock
+    ) {
       toast({
         title: "All fields are required",
         status: "error",
@@ -107,9 +121,8 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
     }
     try {
       const uploadedFile = await uploadImage(imageFile);
-      setUploadedImageURI(uploadedFile); 
+      setUploadedImageURI(uploadedFile);
 
-      // Create the payload with the uploaded image URI
       const payload = {
         uploadedImageURI: uploadedFile,
         productName,
@@ -120,19 +133,16 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
       };
 
       const response = await dispatch(addNewProduct(payload)).unwrap();
-      console.log(response)
-
-      // Handle success response
-      // if (response.status === 200) {
-      //   toast({
-      //     title: "Product added successfully",
-      //     status: "success",
-      //     duration: 3000,
-      //     isClosable: true,
-      //     position: "top-right",
-      //   });
-      //   handleClose(); // Close the drawer after successful submission
-      // }
+      if (response.status === "success") {
+        toast({
+          title: "Product added successfully",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+          position: "top-right",
+        });
+        handleClose();
+      }
     } catch (error) {
       toast({
         title: "Error adding product",
@@ -142,9 +152,7 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
         isClosable: true,
         position: "top-right",
       });
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   const handleButtonClick = () => {
@@ -152,25 +160,46 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
   };
 
   return (
-    <Drawer isOpen={isOpen} placement="right" onClose={onClose} finalFocusRef={btnRef}>
+    <Drawer
+      isOpen={isOpen}
+      placement="right"
+      onClose={onClose}
+      finalFocusRef={btnRef}
+    >
       <DrawerOverlay />
-      <DrawerContent style={{ zIndex: 20000, backgroundColor: " #dbebfc" }} className="bg-secondary">
+      <DrawerContent
+        style={{ zIndex: 20000, backgroundColor: " #dbebfc" }}
+        className="bg-secondary"
+      >
         <DrawerCloseButton />
         <DrawerHeader>
           <p className="text-primary font-bold text-xl">Add a New Product</p>
         </DrawerHeader>
 
         <DrawerBody className="space-y-8">
-          <div {...getRootProps()} className="w-full h-[300px] flex flex-col items-center">
-            <input {...getInputProps()} aria-label="Upload File" ref={inputRef} />
+          <div
+            {...getRootProps()}
+            className="w-full h-[300px] flex flex-col items-center"
+          >
+            <input
+              {...getInputProps()}
+              aria-label="Upload File"
+              ref={inputRef}
+            />
             <div className="w-full h-full rounded-md flex items-center flex-col justify-start border-[1px]">
               {imagePreview ? (
                 <div className="w-full flex-col justify-center items-center p-2 flex h-[260px] border-[1px] rounded-lg border-primary border-1 border-dashed">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               ) : (
                 <div className="w-full flex-col justify-center items-center flex h-full p-2 border-[1px] border-spacing-3 rounded-lg border-primary border-1 border-dashed">
-                  <p className="font-bold text-xl p-2 text-primary">Post File</p>
+                  <p className="font-bold text-xl p-2 text-primary">
+                    Post File
+                  </p>
                   <MdImage className="w-[100px] h-[100px] text-primary" />
                   <p className="text-primary">
                     Drag and drop an image, or click below to select one
@@ -178,7 +207,11 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
                 </div>
               )}
               <div className="flex w-full h-max justify-center items-center p-2">
-                <Button colorScheme="blue" variant="solid" onClick={handleButtonClick}>
+                <Button
+                  colorScheme="blue"
+                  variant="solid"
+                  onClick={handleButtonClick}
+                >
                   Select from computer
                 </Button>
               </div>
@@ -291,12 +324,20 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
         </DrawerBody>
 
         <DrawerFooter>
-          <Button variant="outline" colorScheme="red" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button colorScheme="blue" onClick={handleSubmit} isLoading={loading} loadingText="Adding Product">
-            {loading ? <Spinner size="sm" /> : "Add Product"}
-          </Button>
+          <div className="flex justify-stretch items-center w-full h-max gap-12">
+            <Button variant="outline" colorScheme="red" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="blue"
+              onClick={handleSubmit}
+              isLoading={isLoading}
+              loadingText="Adding Product"
+              disabled={isLoading}
+            >
+              {isLoading ? <Spinner size="sm" /> : "Add Product"}
+            </Button>
+          </div>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

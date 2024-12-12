@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import ProductCard from "../../components/AdminPanel/ProductCard";
+import { PiEmptyBold } from "react-icons/pi";
 import {
-  Box,
   Button,
   Skeleton,
   SkeletonText,
@@ -18,7 +18,6 @@ const Products = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = useRef();
   const dispatch = useDispatch();
-  console.log(isLoading);
 
   useEffect(() => {
     dispatch(fetchAllProducts())
@@ -28,7 +27,7 @@ const Products = () => {
   }, [dispatch]);
 
   return (
-    <div className="flex flex-col gap-2 w-full justify-start">
+    <div className="flex flex-col gap-2 w-full justify-start relative">
       <div className="flex justify-end w-full h-max md:fixed top-2 right-4 z-[1300]">
         <Button
           backgroundColor="#0a6ea9"
@@ -45,26 +44,44 @@ const Products = () => {
 
       <AddProductForm onClose={onClose} isOpen={isOpen} btnRef={btnRef} />
 
-      <div className="gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid overflow-y-scroll">
-        {products?.map((product, i) => (
-          <ProductCard product={product} key={i} />
+      <div className="gap-8 mt-4 mb-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid overflow-y-scroll">
+        {products?.map((product) => (
+          <ProductCard product={product} key={product._id} />
         ))}
+      </div>
 
-        {isLoading && (
-          <div className="flex flex-col w-full h-full">
-            <Skeleton height="150px" />
-            <SkeletonText mt="4" noOfLines={4} spacing="4" skeletonHeight="2" />
-          </div>
-        )}
-
-        {error && (
-          <div className="w-full h-full flex items-center justify-center">
-            <p className="text-red-500 font-bold">
-              Failed to load products. Please try again.
+      {isLoading && (
+        <div className="w-full h-screen gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div className="flex flex-col">
+              <Skeleton height="150px" />
+              <SkeletonText
+                mt="4"
+                noOfLines={4}
+                spacing="4"
+                skeletonHeight="2"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+      {error && (
+        <div className="w-full h-full flex items-center justify-center">
+          <p className="text-red-500 font-bold">
+            Failed to load products. Please try again.
+          </p>
+        </div>
+      )}
+      {products.length === 0 && (
+        <div className={isLoading ? "hidden" : "flex w-full h-full items-center justify-center"}>
+          <div className="flex flex-col w-max h-max items-center justify-center">
+            <PiEmptyBold className="w-[100px] h-[100px] text-primary" />
+            <p className="text-primary text-xl font-bold">
+              No products yet, Add a product!
             </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
