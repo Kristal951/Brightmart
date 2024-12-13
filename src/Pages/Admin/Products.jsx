@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ProductCard from "../../components/AdminPanel/ProductCard";
 import { PiEmptyBold } from "react-icons/pi";
 import {
@@ -18,6 +18,8 @@ const Products = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = useRef();
   const dispatch = useDispatch();
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentlyEditing, setCurrentlyEditing] = useState(null);
 
   useEffect(() => {
     dispatch(fetchAllProducts())
@@ -28,10 +30,11 @@ const Products = () => {
 
   return (
     <div className="flex flex-col gap-2 w-full justify-start relative">
+      {/* Add Product Button */}
       <div className="flex justify-end w-full h-max md:fixed top-2 right-4 z-[1300]">
         <Button
           backgroundColor="#0a6ea9"
-          color="#ffff"
+          color="#ffffff"
           colorScheme="blue"
           variant="solid"
           className="px-4 py-2 text-lg font-semibold text-center rounded-md hover:scale-105 shadow-md"
@@ -42,18 +45,35 @@ const Products = () => {
         </Button>
       </div>
 
-      <AddProductForm onClose={onClose} isOpen={isOpen} btnRef={btnRef} />
+      {/* Add/Edit Product Form */}
+      <AddProductForm
+        onClose={onClose}
+        isOpen={isOpen}
+        btnRef={btnRef}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+        currentlyEditing={currentlyEditing}
+        setCurrentlyEditing={setCurrentlyEditing}
+      />
 
-      <div className="gap-8 mt-4 mb-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid overflow-y-scroll">
-        {products?.map((product) => (
-          <ProductCard product={product} key={product._id} />
+      {/* Product List */}
+      <div className={isLoading ? "hidden" : "gap-8 mt-4 mb-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid overflow-y-scroll"}>
+        {products?.map((product, index) => (
+          <ProductCard
+            product={product}
+            key={product._id || index}
+            onOpen={onOpen}
+            setIsEditing={setIsEditing}
+            setCurrentlyEditing={setCurrentlyEditing}
+          />
         ))}
       </div>
 
+      {/* Loading Skeleton */}
       {isLoading && (
         <div className="w-full h-screen gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div className="flex flex-col">
+          {[...Array(6)].map((_, index) => (
+            <div key={index} className="flex flex-col">
               <Skeleton height="150px" />
               <SkeletonText
                 mt="4"
@@ -65,19 +85,23 @@ const Products = () => {
           ))}
         </div>
       )}
+
+      {/* Error Message */}
       {error && (
-        <div className="w-full h-full flex items-center justify-center">
+        <div className="w-full h-screen flex items-center justify-center">
           <p className="text-red-500 font-bold">
             Failed to load products. Please try again.
           </p>
         </div>
       )}
-      {products.length === 0 && (
-        <div className={isLoading ? "hidden" : "flex w-full h-full items-center justify-center"}>
+
+      {/* No Products */}
+      {!isLoading && products.length === 0 && (
+        <div className="flex w-full h-full items-center justify-center">
           <div className="flex flex-col w-max h-max items-center justify-center">
             <PiEmptyBold className="w-[100px] h-[100px] text-primary" />
             <p className="text-primary text-xl font-bold">
-              No products yet, Add a product!
+              No products yet, add a product!
             </p>
           </div>
         </div>

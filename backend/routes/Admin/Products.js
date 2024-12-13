@@ -1,9 +1,16 @@
-const express = require('express')
+const express = require("express");
 
-const {addProduct, fetchAllProducts} = require('../../controllers/Admin/Product')
-const router = express.Router()
+const {
+  addProduct,
+  fetchAllProducts,
+  updateProduct,
+  deleteProduct,
+} = require("../../controllers/Admin/Product");
 
-router.post('/addProduct',  addProduct)
-router.get('/fetchProducts',  fetchAllProducts)
-module.exports = router
+const router = express.Router();
 
+router.get("/fetchProducts", fetchAllProducts);
+router.post("/addProduct", addProduct);
+router.put("/updateProduct/:id", updateProduct);
+router.delete("/deleteProduct/:id", deleteProduct);
+module.exports = router;

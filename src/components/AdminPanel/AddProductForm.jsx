@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
 import {
   Button,
   Drawer,
@@ -18,43 +18,66 @@ import {
 } from "@chakra-ui/react";
 import { MdImage } from "react-icons/md";
 import { useDropzone } from "react-dropzone";
-import { uploadImage } from "../../lib/appwrite"; // Ensure this function is correctly implemented
+import { uploadImage } from "../../lib/appwrite";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addNewProduct,
   fetchAllProducts,
+  updateProduct,
 } from "../../store/Admin/Products/index";
 
-const AddProductForm = ({ isOpen, onClose, btnRef }) => {
-  const [imagePreview, setImagePreview] = useState(null);
-  const [uploadedImageURI, setUploadedImageURI] = useState("");
-  const [imageFile, setImageFile] = useState(null);
-  const [productName, setProductName] = useState("");
-  const [productPrice, setProductPrice] = useState("");
-  const [productDesc, setProductDesc] = useState("");
-  const [productCateg, setProductCateg] = useState("");
-  const [currentStock, setCurrentStock] = useState("");
-  const [loading, setLoading] = useState(false);
-  const toast = useToast();
-  const inputRef = useRef(null);
-  const dispatch = useDispatch();
-  const {isLoading, error } = useSelector(
-    (state) => state.adminProducts
-  );
+const AddProductForm = ({
+  isOpen,
+  onClose,
+  btnRef,
+  isEditing,
+  setIsEditing,
+  setCurrentlyEditing,
+  currentlyEditing,
+}) => {
+  const [formState, setFormState] = useState({
+    productName: "",
+    productPrice: "",
+    productDesc: "",
+    productCateg: "",
+    currentStock: "",
+    imagePreview: null,
+    imageFile: null,
+    uploadedImageURI: "",
+  });
 
-  const handleClose = async () => {
-    onClose();
-    setImagePreview(null);
-    setImageFile(null);
-    setProductName("");
-    setProductPrice("");
-    setProductDesc("");
-    setProductCateg("");
-    setCurrentStock("");
-    dispatch(fetchAllProducts())
-      .unwrap()
-      .then((result) => console.log("Fetched products:", result))
-      .catch((err) => console.error("Error fetching products:", err));
+  const toast = useToast();
+  const dispatch = useDispatch();
+  const { isLoading } = useSelector((state) => state.adminProducts);
+
+  useEffect(() => {
+    if (isEditing && currentlyEditing) {
+      setFormState({
+        productName: currentlyEditing.name || "",
+        productPrice: currentlyEditing.price || "",
+        productDesc: currentlyEditing.description || "",
+        productCateg: currentlyEditing.category || "",
+        currentStock: currentlyEditing.availableStock || "",
+        imagePreview: currentlyEditing.imageURI || null,
+        imageFile: null,
+        uploadedImageURI: currentlyEditing.imageURI || null,
+      });
+    } else {
+      setFormState({
+        productName: "",
+        productPrice: "",
+        productDesc: "",
+        productCateg: "",
+        currentStock: "",
+        imagePreview: null,
+        imageFile: null,
+        uploadedImageURI: "",
+      });
+    }
+  }, [isEditing, currentlyEditing]);
+
+  const handleInputChange = (field) => (e) => {
+    setFormState({ ...formState, [field]: e.target.value });
   };
 
   const onDrop = useCallback(
@@ -73,11 +96,17 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
           });
           return;
         }
-        setImageFile(file);
-        setImagePreview(URL.createObjectURL(file));
+        if (formState.imagePreview) {
+          URL.revokeObjectURL(formState.imagePreview);
+        }
+        setFormState({
+          ...formState,
+          imageFile: file,
+          imagePreview: URL.createObjectURL(file),
+        });
       }
     },
-    [toast]
+    [formState, toast]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -87,18 +116,28 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
     },
   });
 
-  const handleChange = (setter) => (e) => {
-    setter(e.target.value);
+  const handleClose = () => {
+    onClose();
+    setFormState({
+      productName: "",
+      productPrice: "",
+      productDesc: "",
+      productCateg: "",
+      currentStock: "",
+      imagePreview: null,
+      imageFile: null,
+      uploadedImageURI: "",
+    });
+    setIsEditing(false);
+    dispatch(fetchAllProducts()).catch((err) =>
+      console.error("Error fetching products:", err)
+    );
   };
 
   const handleSubmit = async () => {
-    if (
-      !productName ||
-      !productPrice ||
-      !productDesc ||
-      !productCateg ||
-      !currentStock
-    ) {
+    const { productName, productPrice, productDesc, productCateg, currentStock, imageFile } = formState;
+
+    if (!productName || !productPrice || !productDesc || !productCateg || !currentStock) {
       toast({
         title: "All fields are required",
         status: "error",
@@ -109,22 +148,15 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
       return;
     }
 
-    if (!imageFile) {
-      toast({
-        title: "Please upload an image",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-        position: "top-right",
-      });
-      return;
-    }
     try {
-      const uploadedFile = await uploadImage(imageFile);
-      setUploadedImageURI(uploadedFile);
+      let uploadedFileURI = formState.uploadedImageURI;
+      if (!isEditing && imageFile) {
+        const uploadedFile = await uploadImage(imageFile);
+        uploadedFileURI = uploadedFile
+      }
 
       const payload = {
-        uploadedImageURI: uploadedFile,
+        uploadedImageURI: uploadedFileURI,
         productName,
         productPrice,
         productDesc,
@@ -132,10 +164,13 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
         currentStock,
       };
 
-      const response = await dispatch(addNewProduct(payload)).unwrap();
+      const response = isEditing
+        ? await dispatch(updateProduct(currentlyEditing._id, payload)).unwrap()
+        : await dispatch(addNewProduct(payload)).unwrap();
+
       if (response.status === "success") {
         toast({
-          title: "Product added successfully",
+          title: `Product ${isEditing ? "updated" : "added"} successfully!`,
           status: "success",
           duration: 3000,
           isClosable: true,
@@ -145,56 +180,31 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
       }
     } catch (error) {
       toast({
-        title: "Error adding product",
+        title: "Error submitting product",
         description: error.message,
         status: "error",
         duration: 3000,
         isClosable: true,
         position: "top-right",
       });
-    } 
-  };
-
-  const handleButtonClick = () => {
-    inputRef.current.click();
+    }
   };
 
   return (
-    <Drawer
-      isOpen={isOpen}
-      placement="right"
-      onClose={onClose}
-      finalFocusRef={btnRef}
-    >
+    <Drawer isOpen={isOpen} placement="right" onClose={onClose} finalFocusRef={btnRef}>
       <DrawerOverlay />
-      <DrawerContent
-        style={{ zIndex: 20000, backgroundColor: " #dbebfc" }}
-        className="bg-secondary"
-      >
+      <DrawerContent style={{ zIndex: 20000, backgroundColor: "#dbebfc" }}>
         <DrawerCloseButton />
-        <DrawerHeader>
-          <p className="text-primary font-bold text-xl">Add a New Product</p>
-        </DrawerHeader>
-
-        <DrawerBody className="space-y-8">
-          <div
-            {...getRootProps()}
-            className="w-full h-[300px] flex flex-col items-center"
-          >
-            <input
-              {...getInputProps()}
-              aria-label="Upload File"
-              ref={inputRef}
-            />
+        <DrawerHeader>{isEditing ? "Edit Product" : "Add a New Product"}</DrawerHeader>
+        <DrawerBody>
+          <div {...getRootProps()} className="dropzone-container">
+            <input {...getInputProps()} />
             <div className="w-full h-full rounded-md flex items-center flex-col justify-start border-[1px]">
-              {imagePreview ? (
+              {formState.imagePreview ? (
                 <div className="w-full flex-col justify-center items-center p-2 flex h-[260px] border-[1px] rounded-lg border-primary border-1 border-dashed">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={formState.imagePreview} alt="Preview" className="w-full h-full object-cover" />
                 </div>
+                
               ) : (
                 <div className="w-full flex-col justify-center items-center flex h-full p-2 border-[1px] border-spacing-3 rounded-lg border-primary border-1 border-dashed">
                   <p className="font-bold text-xl p-2 text-primary">
@@ -210,7 +220,7 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
                 <Button
                   colorScheme="blue"
                   variant="solid"
-                  onClick={handleButtonClick}
+                  // onClick={handleButtonClick}
                 >
                   Select from computer
                 </Button>
@@ -218,11 +228,12 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
             </div>
           </div>
 
-          <FormControl>
-            <FormLabel htmlFor="productName">Product Name</FormLabel>
+          <FormControl  padding="2">
+            <FormLabel color="#0a6ea9">Product Name</FormLabel>
             <Input
-              id="productName"
-              placeholder="Product Name"
+              value={formState.productName}
+              onChange={handleInputChange("productName")}
+              placeholder="Enter product name"
               size="md"
               variant="outlined"
               backgroundColor="#ffff"
@@ -232,66 +243,61 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
               }}
               fontWeight="bold"
               color="#0a6ea9"
-              value={productName}
-              onChange={handleChange(setProductName)}
             />
           </FormControl>
 
-          <FormControl>
-            <FormLabel htmlFor="productPrice">Price</FormLabel>
+          <FormControl padding="2">
+            <FormLabel color="#0a6ea9">Price</FormLabel>
             <Input
-              id="productPrice"
-              placeholder="Price in Dollars"
-              size="md"
               type="number"
-              variant="outlined"
-              backgroundColor="white"
-              _focus={{
-                borderColor: "#0a6ea9",
-                boxShadow: "0 0 0 2px #4299e1",
-              }}
-              fontWeight="bold"
-              color="#0a6ea9"
-              value={productPrice}
-              onChange={handleChange(setProductPrice)}
-            />
-          </FormControl>
-
-          <FormControl>
-            <FormLabel htmlFor="productDesc">Product Description</FormLabel>
-            <Textarea
-              id="productDesc"
-              placeholder="Product Description"
+              value={formState.productPrice}
+              onChange={handleInputChange("productPrice")}
+              placeholder="Enter product price"
               size="md"
-              rows="8"
               variant="outlined"
-              backgroundColor="white"
+              backgroundColor="#ffff"
               _focus={{
                 borderColor: "#0a6ea9",
                 boxShadow: "0 0 0 2px #4299e1",
               }}
               fontWeight="bold"
               color="#0a6ea9"
-              value={productDesc}
-              onChange={handleChange(setProductDesc)}
             />
           </FormControl>
 
-          <FormControl>
-            <FormLabel htmlFor="productCateg">Category</FormLabel>
-            <Select
-              id="productCateg"
-              placeholder="Category"
+          <FormControl padding="2">
+            <FormLabel color="#0a6ea9">Description</FormLabel>
+            <Textarea
+              value={formState.productDesc}
+              onChange={handleInputChange("productDesc")}
+              placeholder="Enter product description"
+              size="md"
               variant="outlined"
-              backgroundColor="white"
+              backgroundColor="#ffff"
               _focus={{
                 borderColor: "#0a6ea9",
                 boxShadow: "0 0 0 2px #4299e1",
               }}
               fontWeight="bold"
               color="#0a6ea9"
-              value={productCateg}
-              onChange={handleChange(setProductCateg)}
+              cols="10"
+            />
+          </FormControl>
+
+          <FormControl padding="2">
+            <FormLabel color="#0a6ea9">Category</FormLabel>
+            <Select
+              value={formState.productCateg}
+              onChange={handleInputChange("productCateg")}
+              size="md"
+              variant="outlined"
+              backgroundColor="#ffff"
+              _focus={{
+                borderColor: "#0a6ea9",
+                boxShadow: "0 0 0 2px #4299e1",
+              }}
+              fontWeight="bold"
+              color="#0a6ea9"
             >
               <option value="men">Men</option>
               <option value="women">Women</option>
@@ -302,42 +308,33 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
             </Select>
           </FormControl>
 
-          <FormControl>
-            <FormLabel htmlFor="currentStock">Total stock available</FormLabel>
+          <FormControl padding="2">
+            <FormLabel color="#0a6ea9">Stock</FormLabel>
             <Input
-              id="currentStock"
-              placeholder="Total stock available"
+              type="number"
+              value={formState.currentStock}
+              onChange={handleInputChange("currentStock")}
+              placeholder="Enter stock quantity"
               size="md"
               variant="outlined"
-              type="number"
-              backgroundColor="white"
+              backgroundColor="#ffff"
               _focus={{
                 borderColor: "#0a6ea9",
                 boxShadow: "0 0 0 2px #4299e1",
               }}
               fontWeight="bold"
               color="#0a6ea9"
-              value={currentStock}
-              onChange={handleChange(setCurrentStock)}
             />
           </FormControl>
         </DrawerBody>
-
         <DrawerFooter>
-          <div className="flex justify-stretch items-center w-full h-max gap-12">
-            <Button variant="outline" colorScheme="red" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button
-              colorScheme="blue"
-              onClick={handleSubmit}
-              isLoading={isLoading}
-              loadingText="Adding Product"
-              disabled={isLoading}
-            >
-              {isLoading ? <Spinner size="sm" /> : "Add Product"}
-            </Button>
-          </div>
+          <Button variant="outline" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button colorScheme="blue" onClick={handleSubmit}>
+            {isEditing ? "Update" : "Add"}
+            {isLoading && <Spinner/>}
+          </Button>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
@@ -345,3 +342,5 @@ const AddProductForm = ({ isOpen, onClose, btnRef }) => {
 };
 
 export default AddProductForm;
+
+
