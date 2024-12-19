@@ -57,7 +57,7 @@ const Products = () => {
       />
 
       {/* Product List */}
-      <div className={isLoading ? "hidden" : "gap-8 mt-4 mb-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid overflow-y-scroll"}>
+      <div className={isLoading ? "hidden" : "gap-8 mt-4 mb-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid overflow-y-scroll h-max overflow-x-hidden"}>
         {products?.map((product, index) => (
           <ProductCard
             product={product}

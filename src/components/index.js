@@ -23,109 +23,40 @@ export const AdminSidebarLinks = [
   },
 ];
 
-export const DummyProductData = [
+export const categories = [
   {
-    id: 1,
-    name: "Wireless Earbuds",
-    description:
-      "High-quality noise-canceling earbuds with a long battery life.",
-    price: 50,
-    stock: 100,
-    category: "Accessories",
-    image: "wireless_earbuds.jpg",
+    id: "home",
+    label: "Home",
+    path: "/shop/home"
   },
   {
-    id: 2,
-    name: "Smart Watch",
-    description:
-      "Track your fitness and notifications with this stylish smartwatch.",
-    price: 120,
-    stock: 50,
-    category: "Gadgets",
-    image: "smart_watch.jpg",
+    id: "men",
+    label: "Men",
+    path: "/shop/listings"
   },
   {
-    id: 3,
-    name: "Men's Jacket",
-    description: "Warm and durable jacket for the winter season.",
-    price: 80,
-    stock: 30,
-    category: "Men",
-    image: "mens_jacket.jpg",
+    id: "women",
+    label: "Women",
+    path: "/shop/listings"
   },
   {
-    id: 4,
-    name: "Women's Handbag",
-    description: "Elegant and spacious handbag for all your essentials.",
-    price: 70,
-    stock: 20,
-    category: "Women",
-    image: "womens_handbag.jpg",
+    id: "kids",
+    label: "Kids",
+    path: "/shop/listings"
   },
   {
-    id: 5,
-    name: "Gaming Mouse",
-    description: "Ergonomic mouse with customizable RGB lighting.",
-    price: 40,
-    stock: 80,
-    category: "Gadgets",
-    image: "gaming_mouse.jpg",
+    id: "unisex",
+    label: "Unisex",
+    path: "/shop/listings"
   },
   {
-    id: 6,
-    name: "Kids' Toy Car",
-    description: "Fun and interactive toy car with remote control.",
-    price: 25,
-    stock: 150,
-    category: "Kids",
-    image: "kids_toy_car.jpg",
+    id: "accessories",
+    label: "Accessories",
+    path: "/shop/listings"
   },
   {
-    id: 7,
-    name: "Sunglasses",
-    description: "UV-protective and stylish sunglasses for outdoor activities.",
-    price: 30,
-    stock: 60,
-    category: "Unisex",
-    image: "sunglasses.jpg",
-  },
-  {
-    id: 8,
-    name: "Bluetooth Speaker",
-    description: "Portable speaker with crystal-clear sound quality.",
-    price: 60,
-    stock: 40,
-    category: "Accessories",
-    image: "bluetooth_speaker.jpg",
-  },
-  {
-    id: 9,
-    name: "Laptop Backpack",
-    description:
-      "Durable backpack with multiple compartments for laptops and gadgets.",
-    price: 90,
-    stock: 25,
-    category: "Accessories",
-    image: "laptop_backpack.jpg",
-  },
-  {
-    id: 10,
-    name: "Digital Camera",
-    description:
-      "Capture high-resolution images with this compact digital camera.",
-    price: 300,
-    stock: 15,
-    category: "Gadgets",
-    image: "digital_camera.jpg",
-  },
-  {
-    id: 10,
-    name: "Digital Camera",
-    description:
-      "Capture high-resolution images with this compact digital camera.",
-    price: 300,
-    stock: 15,
-    category: "Gadgets",
-    image: "digital_camera.jpg",
+    id: "gadgets",
+    label: "Gadgets",
+    path: "/shop/listings"
   },
 ];

@@ -25,6 +25,7 @@ import {
   fetchAllProducts,
   updateProduct,
 } from "../../store/Admin/Products/index";
+import { categories } from "../";
 
 const AddProductForm = ({
   isOpen,
@@ -135,9 +136,22 @@ const AddProductForm = ({
   };
 
   const handleSubmit = async () => {
-    const { productName, productPrice, productDesc, productCateg, currentStock, imageFile } = formState;
+    const {
+      productName,
+      productPrice,
+      productDesc,
+      productCateg,
+      currentStock,
+      imageFile,
+    } = formState;
 
-    if (!productName || !productPrice || !productDesc || !productCateg || !currentStock) {
+    if (
+      !productName ||
+      !productPrice ||
+      !productDesc ||
+      !productCateg ||
+      !currentStock
+    ) {
       toast({
         title: "All fields are required",
         status: "error",
@@ -152,7 +166,7 @@ const AddProductForm = ({
       let uploadedFileURI = formState.uploadedImageURI;
       if (!isEditing && imageFile) {
         const uploadedFile = await uploadImage(imageFile);
-        uploadedFileURI = uploadedFile
+        uploadedFileURI = uploadedFile;
       }
 
       const payload = {
@@ -191,20 +205,30 @@ const AddProductForm = ({
   };
 
   return (
-    <Drawer isOpen={isOpen} placement="right" onClose={onClose} finalFocusRef={btnRef}>
+    <Drawer
+      isOpen={isOpen}
+      placement="right"
+      onClose={onClose}
+      finalFocusRef={btnRef}
+    >
       <DrawerOverlay />
       <DrawerContent style={{ zIndex: 20000, backgroundColor: "#dbebfc" }}>
         <DrawerCloseButton />
-        <DrawerHeader>{isEditing ? "Edit Product" : "Add a New Product"}</DrawerHeader>
+        <DrawerHeader>
+          {isEditing ? "Edit Product" : "Add a New Product"}
+        </DrawerHeader>
         <DrawerBody>
           <div {...getRootProps()} className="dropzone-container">
             <input {...getInputProps()} />
             <div className="w-full h-full rounded-md flex items-center flex-col justify-start border-[1px]">
               {formState.imagePreview ? (
                 <div className="w-full flex-col justify-center items-center p-2 flex h-[260px] border-[1px] rounded-lg border-primary border-1 border-dashed">
-                  <img src={formState.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img
+                    src={formState.imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                
               ) : (
                 <div className="w-full flex-col justify-center items-center flex h-full p-2 border-[1px] border-spacing-3 rounded-lg border-primary border-1 border-dashed">
                   <p className="font-bold text-xl p-2 text-primary">
@@ -228,7 +252,7 @@ const AddProductForm = ({
             </div>
           </div>
 
-          <FormControl  padding="2">
+          <FormControl padding="2">
             <FormLabel color="#0a6ea9">Product Name</FormLabel>
             <Input
               value={formState.productName}
@@ -299,12 +323,11 @@ const AddProductForm = ({
               fontWeight="bold"
               color="#0a6ea9"
             >
-              <option value="men">Men</option>
-              <option value="women">Women</option>
-              <option value="kids">Kids</option>
-              <option value="unisex">Unisex</option>
-              <option value="accessories">Accessories</option>
-              <option value="gadgets">Gadgets</option>
+              {categories.map((category, i) => (
+                <option value="men" key={i}>
+                  {category}
+                </option>
+              ))}
             </Select>
           </FormControl>
 
@@ -333,7 +356,7 @@ const AddProductForm = ({
           </Button>
           <Button colorScheme="blue" onClick={handleSubmit}>
             {isEditing ? "Update" : "Add"}
-            {isLoading && <Spinner/>}
+            {isLoading && <Spinner />}
           </Button>
         </DrawerFooter>
       </DrawerContent>
@@ -342,5 +365,3 @@ const AddProductForm = ({
 };
 
 export default AddProductForm;
-
-

@@ -2,13 +2,21 @@ import React, { useState, Fragment } from "react";
 import { MdAdminPanelSettings } from "react-icons/md";
 import { AdminSidebarLinks } from "../";
 import { NavLink } from "react-router-dom";
-import { FiMenu, FiX } from "react-icons/fi"; // Menu and Close icons from react-icons
+import { FiMenu, FiX } from "react-icons/fi";
+import { MdLogout } from "react-icons/md";
+import { logOut } from "../../store/AUTH";
+import { useDispatch } from "react-redux";
 
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
+  const dispatch = useDispatch();
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleLogout = async (e) => {
+    e.preventDefault()
+    dispatch(logOut());
   };
 
   return (
@@ -41,11 +49,23 @@ const Sidebar = () => {
             </NavLink>
           ))}
         </nav>
+        
+        <button
+          className="flex w-[80%] absolute bottom-2 rounded-md items-center justify-start hover:shadow-md hover:border-[1px] hover:border-white"
+          onClick={handleLogout}
+        >
+          <div className="flex w-[50px] h-[50px] p-1 flex-row text-white">
+            <MdLogout className="w-full h-full" />
+          </div>
+          <p className="text-xl text-white font-bold">Logout</p>
+        </button>
       </div>
 
       <div className="md:hidden">
         <button
-          className={`p-2 flex rounded-md items-center justify-center bg-primary text-white fixed top-2 ${isSidebarOpen ? 'right-4' : 'right-4'} z-[1300]`}
+          className={`p-2 flex rounded-md items-center justify-center bg-primary text-white fixed top-2 ${
+            isSidebarOpen ? "right-4" : "right-4"
+          } z-[1300]`}
           onClick={toggleSidebar}
           aria-label="Toggle Sidebar"
         >
@@ -86,7 +106,7 @@ const Sidebar = () => {
                     isActive ? "bg-white text-primary font-bold" : "text-white"
                   }`
                 }
-                onClick={toggleSidebar} 
+                onClick={toggleSidebar}
               >
                 <div className="flex items-center justify-center p-2 w-[45px] h-[45px]">
                   <link.icon className="w-full h-full" />

@@ -58,24 +58,29 @@ const ProductCard = ({
   };
 
   return (
-    <Card _hover={{ boxShadow: "lg" }} cursor="pointer" border="1px" borderColor="#e5e7eb">
+    <Card _hover={{ boxShadow: "lg" }} cursor="pointer" border="1px" borderColor="#e5e7eb" height="400px" position="relative">
       <CardBody>
-        <Image
+        <img 
+          src={product.imageURI || "https://via.placeholder.com/300"}
+          alt={product.name || "No Image Available"}
+          className="w-full md:w-[300px] h-[240px] rounded-t-md"
+        />
+        {/* <Image
           src={product.imageURI || "https://via.placeholder.com/300"}
           alt={product.name || "No Image Available"}
           height="240px"
           width="300px"
           borderTopRadius="lg"
-        />
-        <Stack mt="6" spacing="3">
+        /> */}
+        <Stack mt="2" spacing="3">
           <Text color="#0a6ea9" fontWeight="bold">
             {product.name}
           </Text>
           <Text color="#0a6ea9">${product.price}</Text>
         </Stack>
       </CardBody>
-      <CardFooter>
-        <ButtonGroup spacing="52">
+      <CardFooter height="max-content" padding="0.8rem" position="absolute" bottom="0" right="0" left="0">
+        <ButtonGroup display="flex" justifyContent="space-between">
           <Button
             variant="solid"
             colorScheme="blue"
@@ -93,6 +98,8 @@ const ProductCard = ({
             height="40px"
             padding="1"
             onClick={handleDelete}
+            position="absolute"
+            right="2"
           >
             <CiTrash className="w-full h-full text-red-500" />
           </Button>

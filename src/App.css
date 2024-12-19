@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.css-ktd6ms{
+    z-index: 9000;
+}
